@@ -11,6 +11,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 data class User(
 
@@ -37,6 +38,14 @@ data class County (
     val name : String
 )
 
+data class Gps (
+    val latitude: Double,
+    val longitude: Double,
+    val censusYear: Int,
+    val showall: Boolean,
+    val format: String
+)
+
 interface RetrofitService {
 
     //GET 예제
@@ -45,8 +54,14 @@ interface RetrofitService {
     fun getUser(): Call<User>
 
     //@GET("posts/{page}")
-    @GET("block/find?{lat}&{lng}&format=json")
-    fun getUserPage(@Path("page") page: String): Call<User>
+
+    @GET("block/find")
+    fun getUserPage(@Query("latitude") latitude: Double,
+                    @Query("longitude") longitude: Double,
+                    @Query("censusYear") censusYear: Int,
+                    @Query("showall") showall: Boolean,
+                    @Query("format") format: String
+    ): Call<User>
 }
 
 class MainActivity : AppCompatActivity() {
@@ -61,8 +76,12 @@ class MainActivity : AppCompatActivity() {
 
         val service = retrofit.create(RetrofitService::class.java)
 
-        //service.getUserPage("1").enqueue(object : Callback<User>{
-        service.getUser().enqueue(object : Callback<User>{
+        val gps = Gps(59.5830, -139.02601, 2020, true, "json")
+        Log.d(TAG, "[GPS] data : ${gps.latitude}, ${gps.longitude}")
+
+        //url=https://geo.fcc.gov/api/census/block/find?latitude=59.583&longitude=-139.02601&censusYear=2020&showall=true&format=json}
+        service.getUserPage(gps.latitude, gps.longitude, gps.censusYear, gps.showall, gps.format)
+            .enqueue(object : Callback<User>{
             override fun onResponse(call: Call<User>, response: Response<User>) {
                 Log.d(TAG, "response : $response")
                 if(response.isSuccessful) {
